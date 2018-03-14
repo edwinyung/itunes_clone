@@ -41,10 +41,6 @@ export class FetchData extends React.Component<RouteComponentProps<{}>, FetchDat
             });
     }
 
-    //Checkin or Click Update from the top Menu and save the link
-
-
-
     public render() {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
