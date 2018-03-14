@@ -2,62 +2,93 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import 'isomorphic-fetch';
 
-interface FetchDataExampleState {
-    forecasts: WeatherForecast[];
+interface FetchDataState {
+    tracks: ApiResults[];
     loading: boolean;
+    value: string;
 }
 
-export class FetchData extends React.Component<RouteComponentProps<{}>, FetchDataExampleState> {
+
+//// Create a Search Component for entering an Artist
+// On Search, make an api call to iTunes API to fetch the information about the artist
+// API URL: https://itunes.apple.com/search?term=${ARTIST_NAME}
+
+export class FetchData extends React.Component<RouteComponentProps<{}>, FetchDataState> {
     constructor() {
         super();
-        this.state = { forecasts: [], loading: true };
+        this.state = { tracks: [], loading: true, value: "" };
+    }
 
-        fetch('api/SampleData/WeatherForecasts')
-            .then(response => response.json() as Promise<WeatherForecast[]>)
+
+    //use this.handleChange(e) => {} inside the input tag to find out the type of event; we could also just use any
+    private handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+        var newValue: string = event.currentTarget.value;
+        this.setState({
+            value: newValue
+        });
+        console.log(this.state)
+
+        //When the Search button is clicked, make a call to the API and display the list of albums, including the album name and album cover inside #albums-container in a grid. Use any CSS technique you are comfortable with (Note: The API will return a list of albums based on the search result. Use your skills to find out what the iTunes API data structure looks like and extract the relevant data from it).
+        fetch(`https://itunes.apple.com/search?term=${this.state.value}`)
+            .then(response => {
+                console.log(response)
+                return response.json()
+            })
             .then(data => {
-                this.setState({ forecasts: data, loading: false });
+                console.log(this.state)
+                console.log(data)
+                this.setState({ tracks: data.results, loading: false });
             });
     }
+
+    //Checkin or Click Update from the top Menu and save the link
+
+
 
     public render() {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
-            : FetchData.renderForecastsTable(this.state.forecasts);
+            : FetchData.renderResultsTable(this.state.tracks);
 
         return <div>
-            <h1>Weather forecast</h1>
-            <p>This component demonstrates fetching data from the server.</p>
-            { contents }
+            <h1>Search Itunes API</h1>
+            <p>This component fetches tracks for the searched artist from the Itunes API</p>
+            <div>
+                <p>Artist Name: {this.state.value}</p>
+                <input onChange={this.handleChange} />
+            </div>
+            {contents}
         </div>;
     }
 
-    private static renderForecastsTable(forecasts: WeatherForecast[]) {
+    private static renderResultsTable(tracks: ApiResults[]) {
         return <table className='table'>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
+                    <th>Collection Name</th>
+                    <th>Image</th>
+                    <th>Track Name</th>
+                    <th>Track URL</th>
                 </tr>
             </thead>
             <tbody>
-            {forecasts.map(forecast =>
-                <tr key={ forecast.dateFormatted }>
-                    <td>{ forecast.dateFormatted }</td>
-                    <td>{ forecast.temperatureC }</td>
-                    <td>{ forecast.temperatureF }</td>
-                    <td>{ forecast.summary }</td>
-                </tr>
-            )}
+                {tracks.map(track =>
+                    <tr key={track.trackId}>
+                        <td>{track.collectionName}</td>
+                        <td><img src={track.artworkUrl100} alt="No Image" className="img-responsive" /></td>
+                        <td>{track.trackName}</td>
+                        <td><a href={track.trackViewUrl}>Itunes Link</a></td>
+                    </tr>
+                )}
             </tbody>
         </table>;
     }
 }
 
-interface WeatherForecast {
-    dateFormatted: string;
-    temperatureC: number;
-    temperatureF: number;
-    summary: string;
+interface ApiResults {
+    trackId: number;
+    collectionName: string;
+    artworkUrl100: string;
+    trackName: string;
+    trackViewUrl: string;
 }
